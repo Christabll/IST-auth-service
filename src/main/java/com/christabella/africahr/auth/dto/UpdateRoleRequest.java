@@ -1,6 +1,5 @@
 package com.christabella.africahr.auth.dto;
 
-public record UpdateRoleRequest(
-        String role
-) {
-}
+import com.christabella.africahr.auth.enums.Roles;
+
+public record UpdateRoleRequest(Roles role) {}

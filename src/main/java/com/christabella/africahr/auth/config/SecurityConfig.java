@@ -1,5 +1,6 @@
 package com.christabella.africahr.auth.config;
 
+import com.christabella.africahr.auth.enums.Roles;
 import com.christabella.africahr.auth.security.JwtFilter;
 import com.christabella.africahr.auth.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,7 +56,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(ADMIN_ENDPOINT).hasRole("ADMIN")
+                        .requestMatchers(ADMIN_ENDPOINT).hasRole(Roles.ADMIN.name())
                         .requestMatchers(FAVICON).permitAll()
                         .anyRequest().authenticated()
                 )

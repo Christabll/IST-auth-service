@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.web.bind.annotation.*;
 
 
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {

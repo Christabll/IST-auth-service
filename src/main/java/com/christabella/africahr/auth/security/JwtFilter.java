@@ -54,8 +54,6 @@ public class JwtFilter extends OncePerRequestFilter {
                             username, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
                     logger.debug("Security context set for user: {}", username);
-                } else {
-                    logger.debug("Token validation failed: {}", token);
                 }
             } catch (JwtException e) {
                 logger.debug("Token validation failed: {}", e.getMessage());

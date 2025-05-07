@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 
 @RestController
@@ -45,6 +46,50 @@ public class AuthController {
             @PathVariable String userId,
             @RequestBody UpdateRoleRequest req) {
         return ResponseEntity.ok(authService.updateRole(userId, req));
+    }
+
+
+    @GetMapping("/users/{userId}/email")
+    public ResponseEntity<ApiResponse<String>> getUserEmail(@PathVariable String userId) {
+        String email = authService.getUserEmail(userId);
+        return ResponseEntity.ok(ApiResponse.success("Email fetched", email));
+    }
+
+    @GetMapping("/users/{userId}/fullname")
+    public ResponseEntity<ApiResponse<String>> getUserFullName(@PathVariable String userId) {
+        String fullName = authService.getUserFullName(userId);
+        return ResponseEntity.ok(ApiResponse.success("Full name fetched", fullName));
+    }
+
+
+    @GetMapping("/users/{userId}/department")
+    public ResponseEntity<ApiResponse<String>> getUserDepartment(@PathVariable String userId) {
+        String department = authService.getUserDepartment(userId);
+        return ResponseEntity.ok(ApiResponse.success("Department fetched", department));
+    }
+
+
+    @PutMapping("/users/{userId}/department")
+    public ResponseEntity<ApiResponse<String>> updateDepartment(
+            @PathVariable String userId,
+            @RequestBody UpdateDepartmentRequest request
+    ) {
+        String updated = authService.updateDepartment(userId, request.department());
+        return ResponseEntity.ok(ApiResponse.success("Department updated", updated));
+    }
+
+
+
+    @PostMapping("/departments")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<DepartmentDto>> createDepartment(@RequestBody DepartmentRequestDto dto) {
+        return ResponseEntity.ok(ApiResponse.success("Department created", authService.createDepartment(dto)));
+    }
+
+
+    @GetMapping("/departments")
+    public ResponseEntity<ApiResponse<List<DepartmentDto>>> getDepartments() {
+        return ResponseEntity.ok(ApiResponse.success("Departments fetched", authService.getAllDepartments()));
     }
 
 

@@ -1,6 +1,9 @@
 package com.christabella.africahr.auth.service;
 
 import com.christabella.africahr.auth.config.JwtProperties;
+import com.christabella.africahr.auth.entity.Department;
+import com.christabella.africahr.auth.exception.ResourceNotFoundException;
+import com.christabella.africahr.auth.repository.DepartmentRepository;
 import com.christabella.africahr.auth.security.JwtFilter;
 import com.christabella.africahr.auth.security.JwtTokenProvider;
 import com.christabella.africahr.auth.dto.*;
@@ -29,21 +32,23 @@ public class AuthService {
             .map(Enum::name)
             .toList();
 
-    private final UserRepository userRepo;
+    private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final BlacklistedTokenRepository blacklistRepo;
+    private final DepartmentRepository departmentRepository;
 
-    public AuthService(UserRepository userRepo, JwtTokenProvider jwtTokenProvider,
-                       JwtProperties jwtProperties, BlacklistedTokenRepository blacklistRepo) {
-        this.userRepo = userRepo;
+    public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
+                       JwtProperties jwtProperties,DepartmentRepository departmentRepository ,BlacklistedTokenRepository blacklistRepo) {
+        this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtProperties = jwtProperties;
         this.blacklistRepo = blacklistRepo;
+        this.departmentRepository = departmentRepository;
     }
 
     public void saveUser(String email, Roles role, String department, String avatar) {
-        User user = userRepo.findByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
                     User newUser = new User();
                     newUser.setEmail(email);
@@ -53,7 +58,7 @@ public class AuthService {
         user.setRoles("ROLE_" + role.name());
         user.setDepartment(department);
         user.setAvatarUrl(avatar);
-        userRepo.save(user);
+        userRepository.save(user);
         logger.info("Saved user with email: {}, role: {}, department: {}, avatar: {}", email, role, department, avatar);
     }
 
@@ -74,14 +79,14 @@ public class AuthService {
 
         logger.info("Processing OAuth2 login for user: {}", email);
 
-        User user = userRepo.findByEmail(email).orElse(null);
+        User user = userRepository.findByEmail(email).orElse(null);
         Roles assignedRole;
 
         if (user == null) {
             user = new User();
             user.setEmail(email);
             user.setName(name);
-            long userCount = userRepo.count();
+            long userCount = userRepository.count();
             assignedRole = (userCount == 0) ? Roles.ADMIN : Roles.STAFF;
             user.setRoles("ROLE_" + assignedRole.name());
         } else {
@@ -91,7 +96,7 @@ public class AuthService {
 
         user.setDepartment(null);
         user.setAvatarUrl(avatar);
-        userRepo.save(user);
+        userRepository.save(user);
 
         List<String> roles = Arrays.asList(user.getRoles().split(","));
         String token = jwtTokenProvider.generateToken(user.getEmail(), roles);
@@ -101,7 +106,7 @@ public class AuthService {
     }
 
     public ApiResponse<UserProfileDto> getProfile(String email) {
-        return userRepo.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .map(user -> {
                     List<String> roles = Arrays.stream(user.getRoles().split(","))
                             .map(String::trim)
@@ -144,10 +149,10 @@ public class AuthService {
     }
 
     public ApiResponse<UserProfileDto> updateRole(String userId, UpdateRoleRequest updateRoleRequest) {
-        return userRepo.findById(userId)
+        return userRepository.findById(userId)
                 .map(user -> {
                     user.setRoles("ROLE_" + updateRoleRequest.role().name());
-                    userRepo.save(user);
+                    userRepository.save(user);
                     logger.debug("Role updated successfully for the userId: {}", userId);
                     List<String> roles = Arrays.asList(user.getRoles().split(","));
                     return ApiResponse.success("User role updated successfully",
@@ -158,6 +163,57 @@ public class AuthService {
                     return ApiResponse.error(List.of("User not found for role update"));
                 });
     }
+
+
+    public String getUserEmail(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return user.getEmail();
+    }
+
+    public String getUserFullName(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return user.getName();
+    }
+
+
+    public String getUserDepartment(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return user.getDepartment();
+    }
+
+
+    public String updateDepartment(String userId, String department) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setDepartment(department);
+        userRepository.save(user);
+        return department;
+    }
+
+
+    public DepartmentDto createDepartment(DepartmentRequestDto dto) {
+        if (departmentRepository.existsByName(dto.name())) {
+            throw new IllegalArgumentException("Department already exists");
+        }
+
+        Department saved = departmentRepository.save(
+                Department.builder().name(dto.name()).build()
+        );
+
+        return new DepartmentDto(saved.getId(), saved.getName());
+    }
+
+
+    public List<DepartmentDto> getAllDepartments() {
+        return departmentRepository.findAll().stream()
+                .map(dep -> new DepartmentDto(dep.getId(), dep.getName()))
+                .toList();
+    }
+
+
 
     public ApiResponse<Void> logout() {
         String token = JwtFilter.getToken();

@@ -49,6 +49,12 @@ public class AuthController {
     }
 
 
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<UserProfileDto>>> getAllUsers() {
+        return ResponseEntity.ok(ApiResponse.success("All users fetched", authService.getAllUsers()));
+    }
+
     @GetMapping("/users/{userId}/email")
     public ResponseEntity<ApiResponse<String>> getUserEmail(@PathVariable String userId) {
         String email = authService.getUserEmail(userId);

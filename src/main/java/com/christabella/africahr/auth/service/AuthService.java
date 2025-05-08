@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
+
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
@@ -113,7 +114,7 @@ public class AuthService {
                             .map(role -> role.replace("ROLE_", ""))
                             .toList();
                     return ApiResponse.success("User profile retrieved successfully",
-                            new UserProfileDto(user.getId(), user.getEmail(), roles, user.getAvatarUrl()));
+                            new UserProfileDto(user.getId(), user.getEmail(), roles, user.getAvatarUrl(),user.getDepartment()));
                 })
                 .orElseGet(() -> {
                     logger.warn("Profile retrieval failed - user not found with email: {}", email);
@@ -121,6 +122,13 @@ public class AuthService {
                 });
     }
 
+
+    public List<UserProfileDto> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(user -> UserProfileDto.from(user))
+                .toList();
+    }
     public ApiResponse<TokenValidationResponse> validateToken() {
         String token = JwtFilter.getToken();
 
@@ -156,7 +164,7 @@ public class AuthService {
                     logger.debug("Role updated successfully for the userId: {}", userId);
                     List<String> roles = Arrays.asList(user.getRoles().split(","));
                     return ApiResponse.success("User role updated successfully",
-                            new UserProfileDto(user.getId(), user.getEmail(), roles, user.getAvatarUrl()));
+                            new UserProfileDto(user.getId(), user.getEmail(), roles, user.getAvatarUrl(),user.getDepartment()));
                 })
                 .orElseGet(() -> {
                     logger.warn("Role update failed - user not found with ID: {}", userId);

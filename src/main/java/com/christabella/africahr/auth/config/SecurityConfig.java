@@ -55,7 +55,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(ADMIN_ENDPOINT).hasRole(Roles.ADMIN.name())
+                        .requestMatchers(ADMIN_ENDPOINT).hasAuthority(Roles.ADMIN.name())
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth

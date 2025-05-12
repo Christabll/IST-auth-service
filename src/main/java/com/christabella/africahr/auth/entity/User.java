@@ -2,7 +2,6 @@ package com.christabella.africahr.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.Instant;
 
 @Entity
@@ -13,7 +12,6 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 public class User {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

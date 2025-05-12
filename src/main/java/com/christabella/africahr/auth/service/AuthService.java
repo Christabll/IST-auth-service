@@ -56,7 +56,7 @@ public class AuthService {
                     return newUser;
                 });
 
-        user.setRoles("ROLE_" + role.name());
+        user.setRoles(role.name());
         user.setDepartment(department);
         user.setAvatarUrl(avatar);
         userRepository.save(user);
@@ -129,6 +129,7 @@ public class AuthService {
                 .map(user -> UserProfileDto.from(user))
                 .toList();
     }
+
     public ApiResponse<TokenValidationResponse> validateToken() {
         String token = JwtFilter.getToken();
 
@@ -156,10 +157,11 @@ public class AuthService {
         return ApiResponse.success("Authentication token is valid", new TokenValidationResponse(true));
     }
 
+    
     public ApiResponse<UserProfileDto> updateRole(String userId, UpdateRoleRequest updateRoleRequest) {
         return userRepository.findById(userId)
                 .map(user -> {
-                    user.setRoles("ROLE_" + updateRoleRequest.role().name());
+                    user.setRoles(updateRoleRequest.role().name());
                     userRepository.save(user);
                     logger.debug("Role updated successfully for the userId: {}", userId);
                     List<String> roles = Arrays.asList(user.getRoles().split(","));

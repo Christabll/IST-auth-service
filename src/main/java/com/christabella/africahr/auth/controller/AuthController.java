@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -39,7 +38,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.validateToken());
     }
 
-
     @PutMapping("/users/{userId}/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserProfileDto>> updateRole(
@@ -47,7 +45,6 @@ public class AuthController {
             @RequestBody UpdateRoleRequest req) {
         return ResponseEntity.ok(authService.updateRole(userId, req));
     }
-
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
@@ -67,24 +64,19 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Full name fetched", fullName));
     }
 
-
     @GetMapping("/users/{userId}/department")
     public ResponseEntity<ApiResponse<String>> getUserDepartment(@PathVariable String userId) {
         String department = authService.getUserDepartment(userId);
         return ResponseEntity.ok(ApiResponse.success("Department fetched", department));
     }
 
-
     @PutMapping("/users/{userId}/department")
     public ResponseEntity<ApiResponse<String>> updateDepartment(
             @PathVariable String userId,
-            @RequestBody UpdateDepartmentRequest request
-    ) {
+            @RequestBody UpdateDepartmentRequest request) {
         String updated = authService.updateDepartment(userId, request.department());
         return ResponseEntity.ok(ApiResponse.success("Department updated", updated));
     }
-
-
 
     @PostMapping("/departments")
     @PreAuthorize("hasRole('ADMIN')")
@@ -92,16 +84,19 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Department created", authService.createDepartment(dto)));
     }
 
-
     @GetMapping("/departments")
     public ResponseEntity<ApiResponse<List<DepartmentDto>>> getDepartments() {
         return ResponseEntity.ok(ApiResponse.success("Departments fetched", authService.getAllDepartments()));
     }
 
-
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout() {
         return ResponseEntity.ok(authService.logout());
+    }
+
+    @GetMapping("/users/email/{email}")
+    public ResponseEntity<ApiResponse<UserProfileDto>> getUserByEmail(@PathVariable String email) {
+        return ResponseEntity.ok(authService.getProfile(email));
     }
 
 }

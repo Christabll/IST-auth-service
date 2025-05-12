@@ -38,12 +38,14 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(userId)
+                .claim("userId", userId)
                 .claim("roles", roles)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     public boolean validateToken(String token) {
         try {

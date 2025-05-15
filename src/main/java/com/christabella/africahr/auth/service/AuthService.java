@@ -19,7 +19,6 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
-
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
@@ -40,7 +39,7 @@ public class AuthService {
     private final DepartmentRepository departmentRepository;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
-                       JwtProperties jwtProperties,DepartmentRepository departmentRepository ,BlacklistedTokenRepository blacklistRepo) {
+                       JwtProperties jwtProperties, DepartmentRepository departmentRepository, BlacklistedTokenRepository blacklistRepo) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtProperties = jwtProperties;
@@ -89,10 +88,9 @@ public class AuthService {
             user.setName(name);
             long userCount = userRepository.count();
             assignedRole = (userCount == 0) ? Roles.ADMIN : Roles.STAFF;
-            user.setRoles("ROLE_" + assignedRole.name());
+            user.setRoles(assignedRole.name());
         } else {
-            String roleStr = user.getRoles().replace("ROLE_", "");
-            assignedRole = Roles.valueOf(roleStr.toUpperCase());
+            assignedRole = Roles.valueOf(user.getRoles().toUpperCase());
         }
 
         user.setDepartment(null);
@@ -111,10 +109,10 @@ public class AuthService {
                 .map(user -> {
                     List<String> roles = Arrays.stream(user.getRoles().split(","))
                             .map(String::trim)
-                            .map(role -> role.replace("ROLE_", ""))
                             .toList();
+
                     return ApiResponse.success("User profile retrieved successfully",
-                            new UserProfileDto(user.getId(), user.getEmail(), roles, user.getAvatarUrl(),user.getDepartment()));
+                            new UserProfileDto(user.getId(), user.getEmail(), roles, user.getAvatarUrl(), user.getDepartment()));
                 })
                 .orElseGet(() -> {
                     logger.warn("Profile retrieval failed - user not found with email: {}", email);
@@ -122,11 +120,10 @@ public class AuthService {
                 });
     }
 
-
     public List<UserProfileDto> getAllUsers() {
         List<User> users = userRepository.findAll();
         return users.stream()
-                .map(user -> UserProfileDto.from(user))
+                .map(UserProfileDto::from)
                 .toList();
     }
 
@@ -157,7 +154,6 @@ public class AuthService {
         return ApiResponse.success("Authentication token is valid", new TokenValidationResponse(true));
     }
 
-    
     public ApiResponse<UserProfileDto> updateRole(String userId, UpdateRoleRequest updateRoleRequest) {
         return userRepository.findById(userId)
                 .map(user -> {
@@ -166,7 +162,7 @@ public class AuthService {
                     logger.debug("Role updated successfully for the userId: {}", userId);
                     List<String> roles = Arrays.asList(user.getRoles().split(","));
                     return ApiResponse.success("User role updated successfully",
-                            new UserProfileDto(user.getId(), user.getEmail(), roles, user.getAvatarUrl(),user.getDepartment()));
+                            new UserProfileDto(user.getId(), user.getEmail(), roles, user.getAvatarUrl(), user.getDepartment()));
                 })
                 .orElseGet(() -> {
                     logger.warn("Role update failed - user not found with ID: {}", userId);
@@ -175,10 +171,25 @@ public class AuthService {
     }
 
 
-    public String getUserEmail(String userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return user.getEmail();
+    public String getUserEmail(String possibleUserId) {
+        try {
+            try {
+                java.util.UUID.fromString(possibleUserId);
+            } catch (IllegalArgumentException e) {
+                logger.warn("Received non-UUID format in getUserEmail: {}", possibleUserId);
+                if (possibleUserId.contains("@")) {
+                    return possibleUserId;
+                }
+                throw new ResourceNotFoundException("Invalid user ID format");
+            }
+
+            User user = userRepository.findById(possibleUserId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            return user.getEmail();
+        } catch (Exception e) {
+            logger.error("Error retrieving email for userId {}: {}", possibleUserId, e.getMessage());
+            return "unknown@example.com";
+        }
     }
 
     public String getUserFullName(String userId) {
@@ -187,13 +198,11 @@ public class AuthService {
         return user.getName();
     }
 
-
     public String getUserDepartment(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return user.getDepartment();
     }
-
 
     public String updateDepartment(String userId, String department) {
         User user = userRepository.findById(userId)
@@ -202,7 +211,6 @@ public class AuthService {
         userRepository.save(user);
         return department;
     }
-
 
     public DepartmentDto createDepartment(DepartmentRequestDto dto) {
         if (departmentRepository.existsByName(dto.name())) {
@@ -216,14 +224,17 @@ public class AuthService {
         return new DepartmentDto(saved.getId(), saved.getName());
     }
 
-
     public List<DepartmentDto> getAllDepartments() {
         return departmentRepository.findAll().stream()
                 .map(dep -> new DepartmentDto(dep.getId(), dep.getName()))
                 .toList();
     }
 
-
+    public String getUserIdByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found for email: " + email));
+        return user.getId();
+    }
 
     public ApiResponse<Void> logout() {
         String token = JwtFilter.getToken();

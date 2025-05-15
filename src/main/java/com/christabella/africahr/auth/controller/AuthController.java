@@ -39,7 +39,7 @@ public class AuthController {
     }
 
     @PutMapping("/users/{userId}/role")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<UserProfileDto>> updateRole(
             @PathVariable String userId,
             @RequestBody UpdateRoleRequest req) {
@@ -47,7 +47,7 @@ public class AuthController {
     }
 
     @GetMapping("/users")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<List<UserProfileDto>>> getAllUsers() {
         return ResponseEntity.ok(ApiResponse.success("All users fetched", authService.getAllUsers()));
     }
@@ -56,6 +56,12 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> getUserEmail(@PathVariable String userId) {
         String email = authService.getUserEmail(userId);
         return ResponseEntity.ok(ApiResponse.success("Email fetched", email));
+    }
+
+    @GetMapping("/users/id")
+    public ResponseEntity<ApiResponse<String>> getUserIdByEmail(@RequestParam String email) {
+        String userId = authService.getUserIdByEmail(email);
+        return ResponseEntity.ok(ApiResponse.success("User ID fetched", userId));
     }
 
     @GetMapping("/users/{userId}/fullname")
@@ -79,7 +85,7 @@ public class AuthController {
     }
 
     @PostMapping("/departments")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ApiResponse<DepartmentDto>> createDepartment(@RequestBody DepartmentRequestDto dto) {
         return ResponseEntity.ok(ApiResponse.success("Department created", authService.createDepartment(dto)));
     }
@@ -98,5 +104,4 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserProfileDto>> getUserByEmail(@PathVariable String email) {
         return ResponseEntity.ok(authService.getProfile(email));
     }
-
 }

@@ -9,6 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+
+
 import java.util.List;
 
 @RestController
@@ -103,5 +105,12 @@ public class AuthController {
     @GetMapping("/users/email/{email}")
     public ResponseEntity<ApiResponse<UserProfileDto>> getUserByEmail(@PathVariable String email) {
         return ResponseEntity.ok(authService.getProfile(email));
+    }
+
+    @GetMapping("/users/role/{role}/emails")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<List<String>> getEmailsByRole(@PathVariable String role) {
+        List<String> emails = authService.getEmailsByRole(role);
+        return ResponseEntity.ok(emails);
     }
 }

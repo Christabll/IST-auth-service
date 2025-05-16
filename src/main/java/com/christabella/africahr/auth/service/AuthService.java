@@ -236,6 +236,13 @@ public class AuthService {
         return user.getId();
     }
 
+    public List<String> getEmailsByRole(String role) {
+        return userRepository.findByRolesContainingIgnoreCase(role)
+                .stream()
+                .map(User::getEmail)
+                .toList();
+    }
+
     public ApiResponse<Void> logout() {
         String token = JwtFilter.getToken();
         if (token == null) {
